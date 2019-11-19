@@ -5,7 +5,11 @@
 import requests
 import sys
 import socket
-from time import time 
+from time import time
+import threading
+
+
+
 s = str(round(time() * 1000))
 fobj_out = open("Tabelle" + s + ".txt", "w")
 """
@@ -17,12 +21,12 @@ rhost=sys.argv[1]
 wordlist=sys.argv[2]
 store=[]
 """
-When we took the input, 
-we set a variable named rhost. 
+When we took the input,
+we set a variable named rhost.
 Short for remote host, this is the target.
 But, since we're brute forcing directories here,
 this needs to be a URL.
-First we need to test to see if the given URL exists and is reachable. We can verify this by making a test connection to it using sockets. We'll simply make a socket, and use the connect_ex() method to test the URL. This method returns a zero if the connection was successful, and an error otherwise. 
+First we need to test to see if the given URL exists and is reachable. We can verify this by making a test connection to it using sockets. We'll simply make a socket, and use the connect_ex() method to test the URL. This method returns a zero if the connection was successful, and an error otherwise.
 """
 
 
@@ -39,11 +43,11 @@ try:
     else:
         print('fail')
         print('[!error]:cannot reach rhost')
-        sys.exit(1)    
+        sys.exit(1)
 except socket.error as e:
         print('fail')
         print(f'[!error]:cannot reach rhost {rhost}')
-        sys.exit(1) 
+        sys.exit(1)
 
 #Read the Specified Word List
 
@@ -52,7 +56,7 @@ try:
     with open(wordlist) as file:
         to_check=file.read().strip().split('\n')
     print('DONE')
-    print(f'[*]total path to check {len(to_check)}')        
+    print(f'[*]total path to check {len(to_check)}')
 except IOError:
     print("[!] error:failed to read specified file")
     sys.exit(1)
@@ -72,9 +76,14 @@ def checkpath(path):
 print('[*] beginning scan...')
 try:
     for i in to_check:
-        checkpath(i)
-        store.append('http://'+rhost+'/'+i)
-        fobj_out.write('\n'+'http://'+rhost+'/'+i)
+        try:
+            t1=threading.Thread(target=checkpath,args=(i,))
+            t1.start()
+            store.append('http://'+rhost+'/'+i)
+            fobj_out.write('\n'+'http://'+rhost+'/'+i)
+            t1.daemon
+        except Exception:
+            continue
     print('[*] Scan completed')
     fobj_out.close()
 except KeyboardInterrupt:
@@ -82,11 +91,3 @@ except KeyboardInterrupt:
     print(store)
     fobj_out.close()
     sys.exit(1)
-
-
-    
-
-
-
-
-
